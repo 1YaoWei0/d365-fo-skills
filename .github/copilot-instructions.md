@@ -42,13 +42,18 @@ read `.github/skills/using-d365-fo-skills/SKILL.md` first.
 
 ## Hooks
 
-This repository uses lifecycle hooks:
+This repository uses lifecycle hooks defined in `.github/hooks/hooks.json` (official GitHub Copilot CLI format, `version: 1`).
 
 | Hook | Script | When it fires |
 |------|--------|--------------|
-| `sessionStart` | `scripts/hooks/session-start.ps1` | Every session open — checks env, auto-launches VS |
-| `postToolUse` | `scripts/hooks/post-build-read-output.ps1` | After any build tool — reads VS Output panes |
-| `errorOccurred` | `scripts/hooks/error-capture.ps1` | On tool error — extracts compile errors for self-fix |
+| `sessionStart` | `.github/hooks/scripts/session-start.ps1` | Every session open — checks env, auto-launches VS |
+| `userPromptSubmitted` | `.github/hooks/scripts/log-prompt.ps1` | Each prompt — logs redacted prompt to audit trail |
+| `preToolUse` | `.github/hooks/scripts/pre-tool-policy.ps1` | Before each tool — blocks dangerous operations |
+| `postToolUse` | `.github/hooks/scripts/post-build-read-output.ps1` | After build tools — reads VS Output panes |
+| `errorOccurred` | `.github/hooks/scripts/error-capture.ps1` | On agent error — extracts VS compile errors for self-fix |
+
+All scripts read JSON input from stdin via `[Console]::In.ReadToEnd() | ConvertFrom-Json`.
+Audit logs are written to `.github/hooks/logs/audit.jsonl` (excluded from git).
 
 ## Skill Routing
 

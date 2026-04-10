@@ -30,10 +30,12 @@ The repository includes **lifecycle hooks** that fire automatically:
 | Hook | When | What it does |
 |------|------|-------------|
 | `sessionStart` | Every session open | Checks environment, auto-launches VS with solution |
-| `postToolUse` | After any build tool | Reads VS Output panes automatically |
-| `errorOccurred` | On tool error | Extracts compile errors, feeds them back for self-fix |
+| `userPromptSubmitted` | Each prompt | Logs redacted prompt to audit trail |
+| `preToolUse` | Before each tool | Blocks dangerous operations per D365 policy |
+| `postToolUse` | After build tools | Reads VS Output panes automatically |
+| `errorOccurred` | On agent error | Extracts VS compile errors, feeds them back for self-fix |
 
-These hooks are configured in `hooks.json` and run from `scripts/hooks/`.
+These hooks are configured in `.github/hooks/hooks.json` (official `version: 1` format) and run from `.github/hooks/scripts/`.
 
 ## The Development Lifecycle
 

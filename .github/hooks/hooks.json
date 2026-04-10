@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "powershell": "./scripts/session-start.ps1",
+        "cwd": ".github/hooks",
+        "timeoutSec": 90,
+        "comment": "Check environment and auto-launch Visual Studio with the D365 F&O solution"
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "powershell": "./scripts/log-prompt.ps1",
+        "cwd": ".github/hooks",
+        "timeoutSec": 10,
+        "comment": "Log user prompts for session audit trail"
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "powershell": "./scripts/pre-tool-policy.ps1",
+        "cwd": ".github/hooks",
+        "timeoutSec": 15,
+        "comment": "Block dangerous operations before they execute"
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "powershell": "./scripts/post-build-read-output.ps1",
+        "cwd": ".github/hooks",
+        "timeoutSec": 30,
+        "comment": "After any build/rebuild tool, automatically read VS Output panes and report result"
+      }
+    ],
+    "errorOccurred": [
+      {
+        "type": "command",
+        "powershell": "./scripts/error-capture.ps1",
+        "cwd": ".github/hooks",
+        "timeoutSec": 30,
+        "comment": "When an error occurs, capture VS Output error lines and feed back to Copilot for self-fix"
+      }
+    ]
+  }
+}

@@ -4,7 +4,20 @@ All notable changes to the D365 F&O Skills repository will be documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Hooks structure corrected to official GitHub Copilot CLI specification** (`.github/hooks/`):
+  - `hooks.json`: rewritten — `"hooks"` is now an object keyed by event name (not an array); each entry uses `"type"`, `"bash"`/`"powershell"`, `"cwd"`, `"timeoutSec"`, `"comment"` per official spec
+  - All hook PS1 scripts now read stdin JSON via `[Console]::In.ReadToEnd() | ConvertFrom-Json` as required
+  - `session-start.ps1`: reads `source` and `initialPrompt` from input; exits with `exit 0`
+  - `post-build-read-output.ps1`: reads `toolName`, `toolArgs`, `toolResult` from input; exits early if not a build tool
+  - `error-capture.ps1`: reads `error.message`, `error.name`, `error.stack` from input
+
 ### Added
+- `log-prompt.ps1` — `userPromptSubmitted` hook: logs redacted prompts to `.github/hooks/logs/audit.jsonl`
+- `pre-tool-policy.ps1` — `preToolUse` hook: blocks format/diskpart, DROP TABLE, download-and-execute, destructive rm; warns on duty/role modifications; returns `permissionDecision` per spec
+- `.github/hooks/logs/` directory (excluded from git via `.gitignore`) for local audit logs
+- `.gitignore`: added `.github/hooks/logs/` exclusion rule
+
 - **Hooks automation layer** (`hooks.json` + `scripts/hooks/`):
   - `session-start.ps1` — sessionStart hook: env check, auto-launch VS with solution
   - `post-build-read-output.ps1` — postToolUse hook: auto-read VS Output panes after build

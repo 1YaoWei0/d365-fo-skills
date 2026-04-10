@@ -1,29 +1,64 @@
 <#
 .SYNOPSIS
-    postToolUse hook — after any build/rebuild tool runs, automatically reads
-    the Visual Studio Output panes and reports result to Copilot.
+    postToolUse hook — after any tool runs, reads Visual Studio Output panes
+    if the tool was a build/rebuild operation.
 
 .DESCRIPTION
-    Fires after every shell/PowerShell tool use.
-    Only acts when a build or rebuild was just triggered.
+    Fires after every tool use. Reads JSON context from stdin including toolName,
+    toolArgs, and toolResult. Only reads VS output if a build was just triggered.
 
     What it does:
-    1. Detects whether the last tool was a build operation
-    2. Connects to Visual Studio via COM (Running Object Table / DTE)
-    3. Switches Output pane to "Dynamics 365 Build Details" and reads full text
-    4. Switches Output pane to "FinOps Cloud Runtime" and reads last 30 lines
-    5. Reports build result: succeeded / failed + deploy status
+    1. Reads input JSON from stdin (toolName, toolArgs, toolResult)
+    2. Exits early if tool was not a build-related command
+    3. Connects to Visual Studio via COM (Running Object Table / DTE)
+    4. Switches Output pane to "Dynamics 365 Build Details" and reads full text
+    5. Switches Output pane to "FinOps Cloud Runtime" and reads last 30 lines
+    6. Reports build result: succeeded / failed + deploy status
+
+.NOTES
+    Called by hooks.json with cwd=".github/hooks".
 #>
+
+$ErrorActionPreference = "Stop"
+
+# Read JSON input from stdin (official hooks protocol)
+try {
+    $inputData = [Console]::In.ReadToEnd() | ConvertFrom-Json
+    $toolName   = $inputData.toolName
+    $toolArgs   = $inputData.toolArgs    # JSON string
+    $resultType = $inputData.toolResult.resultType  # "success", "failure", "denied"
+    $resultText = $inputData.toolResult.textResultForLlm
+} catch {
+    $toolName   = ""
+    $toolArgs   = ""
+    $resultType = ""
+    $resultText = ""
+}
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 $BuildOutputPane   = "Dynamics 365 Build Details"
 $RuntimeOutputPane = "FinOps Cloud Runtime"
 $RuntimeTailLines  = 30
+# Build-related keywords — only act if these appear in the tool command
+$BuildKeywords     = @("rebuild", "build", "RebuildSolution", "BuildSolution", "devenv")
 # ───────────────────────────────────────────────────────────────────────────────
 
+# Exit early if this tool use was not build-related
+$isBuildTool = $false
+foreach ($kw in $BuildKeywords) {
+    if ($toolArgs -match $kw -or $toolName -match $kw) {
+        $isBuildTool = $true
+        break
+    }
+}
+if (-not $isBuildTool) { exit 0 }
+
 function Get-VsDte {
-    $rot = [System.Runtime.InteropServices.Marshal]::GetActiveObject("VisualStudio.DTE") 2>$null
-    return $rot
+    try {
+        return [System.Runtime.InteropServices.Marshal]::GetActiveObject("VisualStudio.DTE")
+    } catch {
+        return $null
+    }
 }
 
 function Read-OutputPane {
@@ -66,7 +101,6 @@ try {
             Write-Host "  ✅ Build: SUCCEEDED" -ForegroundColor Green
         } elseif ($failed) {
             Write-Host "  ❌ Build: FAILED" -ForegroundColor Red
-            # Extract error lines for Copilot context
             $errorLines = ($buildOutput -split "`n") | Where-Object { $_ -match "error" } | Select-Object -First 20
             Write-Host "  --- Build errors ---"
             $errorLines | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
@@ -90,3 +124,4 @@ try {
 }
 
 Write-Host ""
+exit 0

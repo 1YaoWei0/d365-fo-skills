@@ -1,19 +1,36 @@
 <#
 .SYNOPSIS
-    errorOccurred hook — when any tool exits with an error, opens the VS Output
-    pane, extracts error lines, and feeds them back to Copilot for self-fix.
+    errorOccurred hook — when an error occurs during agent execution, opens
+    the VS Output pane, extracts error lines, and feeds them back to Copilot.
 
 .DESCRIPTION
-    Fires whenever any Copilot tool use exits with a non-zero exit code.
+    Fires whenever an error occurs during agent execution.
+    Reads JSON context from stdin (error.message, error.name, error.stack).
 
     What it does:
-    1. Connects to Visual Studio via COM (DTE)
-    2. Reads the "Dynamics 365 Build Details" Output pane
-    3. Extracts X++ compile error lines
-    4. Outputs them in a structured format that Copilot can parse
-    5. Copilot then invokes d365-metadata-lookup to verify types, fixes
-       the X++ XML, and triggers a rebuild
+    1. Reads error details from stdin JSON
+    2. Connects to Visual Studio via COM (DTE)
+    3. Reads the "Dynamics 365 Build Details" Output pane
+    4. Extracts X++ compile error lines
+    5. Outputs them in a structured format that Copilot can parse for self-fix
+
+.NOTES
+    Called by hooks.json with cwd=".github/hooks".
 #>
+
+$ErrorActionPreference = "Stop"
+
+# Read JSON input from stdin (official hooks protocol)
+try {
+    $inputData    = [Console]::In.ReadToEnd() | ConvertFrom-Json
+    $errorMessage = $inputData.error.message
+    $errorName    = $inputData.error.name
+    $errorStack   = $inputData.error.stack
+} catch {
+    $errorMessage = "unknown"
+    $errorName    = "unknown"
+    $errorStack   = ""
+}
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 $BuildOutputPane = "Dynamics 365 Build Details"
@@ -47,24 +64,26 @@ function Get-BuildErrors {
 }
 
 Write-Host ""
-Write-Host "=== errorOccurred: Capturing build errors for self-fix ===" -ForegroundColor Red
+Write-Host "=== errorOccurred: [$errorName] $errorMessage ===" -ForegroundColor Red
 
 $dte = Get-VsDte
 if (-not $dte) {
-    Write-Host "  ⚠️  Visual Studio not running — cannot capture error details" -ForegroundColor Yellow
+    Write-Host "  ⚠️  Visual Studio not running — cannot capture VS build errors" -ForegroundColor Yellow
+    Write-Host "  Agent error details: [$errorName] $errorMessage"
     exit 0
 }
 
-$errors = Get-BuildErrors -dte $dte
+$buildErrors = Get-BuildErrors -dte $dte
 
-if ($errors.Count -eq 0) {
+if ($buildErrors.Count -eq 0) {
     Write-Host "  ℹ️  No X++ compile errors found in '$BuildOutputPane' pane"
-    Write-Host "  Check the error reported by the failing tool directly."
+    Write-Host "  Agent error: [$errorName] $errorMessage"
+    if ($errorStack) { Write-Host "  Stack: $errorStack" }
 } else {
-    Write-Host "  ❌ $($errors.Count) compile error(s) found:" -ForegroundColor Red
+    Write-Host "  ❌ $($buildErrors.Count) compile error(s) found:" -ForegroundColor Red
     Write-Host ""
     Write-Host "  --- ERRORS FOR COPILOT SELF-FIX ---"
-    foreach ($line in $errors) {
+    foreach ($line in $buildErrors) {
         Write-Host "  $line" -ForegroundColor Yellow
     }
     Write-Host "  ------------------------------------"
@@ -77,3 +96,4 @@ if ($errors.Count -eq 0) {
 }
 
 Write-Host ""
+exit 0
