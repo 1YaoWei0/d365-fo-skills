@@ -4,8 +4,21 @@ All notable changes to the D365 F&O Skills repository will be documented here.
 
 ## [Unreleased]
 
+### Added
+- **Hooks automation layer** (`hooks.json` + `scripts/hooks/`):
+  - `session-start.ps1` — sessionStart hook: env check, auto-launch VS with solution
+  - `post-build-read-output.ps1` — postToolUse hook: auto-read VS Output panes after build
+  - `error-capture.ps1` — errorOccurred hook: extract compile errors for Copilot self-fix
+- **New skill: `d365-create-runnable-class`** — scaffold X++ class XML + `.rnrproj` with team rules (no RunBase, CBA model, DeployOnline=True)
+- **New skill: `d365-build-and-deploy`** — connect to VS via DTE, trigger `Build.RebuildSolution`, read `Dynamics 365 Build Details` and `FinOps Cloud Runtime` Output panes
+- **New skill: `d365-metadata-lookup`** — search PackagesLocalDirectory for any type; detects views (not updatable), shows methods, shows EDT parent chain
+- **New agent: `d365-xpp-developer`** — expert X++ developer agent with error self-fix protocol (read error → lookup type → fix XML → rebuild)
+- **New agent: `d365-build-reader`** — read-only build monitor, never modifies files
+
 ### Changed
-- Expanded `agents/d365-code-reviewer.md` with detailed team-specific D365 F&O code review checklist:
+- Updated `.github/copilot-instructions.md`: fixed skill path references to `.github/skills/`, added environment table (model, VS path, PackagesLocalDirectory), added X++ coding rules, added hooks section, added new skills and agents to routing tables
+- Updated `using-d365-fo-skills` bootstrap skill: added automation layer section, updated lifecycle diagram, expanded routing table with new skills and agents
+- Updated `README.md`: added automation layer section, split skill overview into automation vs lifecycle skills, added agents table, updated primary workflow diagram
   - Added pre-review requirements (spec review, RunJob tagging, historical data, integration testing)
   - Added deployment risk section (field removal registration, index changes, duties/roles)
   - Added security and privilege completeness checks (endpoint permissions)

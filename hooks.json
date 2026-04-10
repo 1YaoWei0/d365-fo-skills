@@ -1,0 +1,19 @@
+{
+  "hooks": [
+    {
+      "event": "sessionStart",
+      "script": "scripts/hooks/session-start.ps1",
+      "description": "Check environment and auto-launch Visual Studio with the D365 F&O solution"
+    },
+    {
+      "event": "postToolUse",
+      "script": "scripts/hooks/post-build-read-output.ps1",
+      "description": "After any build/rebuild tool, automatically read VS Output panes and report result"
+    },
+    {
+      "event": "errorOccurred",
+      "script": "scripts/hooks/error-capture.ps1",
+      "description": "When any tool exits with an error, capture VS Output error lines and feed back to Copilot for self-fix"
+    }
+  ]
+}
