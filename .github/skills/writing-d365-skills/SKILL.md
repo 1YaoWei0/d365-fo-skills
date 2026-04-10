@@ -29,8 +29,16 @@ If you cannot answer these, the skill is not ready to be written yet.
 Every skill in this repository lives at:
 
 ```
-skills/<skill-name>/SKILL.md
+.github/skills/<skill-name>/SKILL.md
 ```
+
+Before creating the file, confirm the skill name with the user and show them the full path where it will be created:
+
+```
+C:\Projects\d365-fo-skills\.github\skills\<skill-name>\SKILL.md
+```
+
+Ask the user to confirm or provide an alternative path if needed.
 
 Every `SKILL.md` must include:
 
@@ -72,7 +80,7 @@ description: <one-sentence description for GitHub Copilot CLI discovery>
 
 ## After Writing a New Skill
 
-1. Add the skill to the routing table in `skills/using-d365-fo-skills/SKILL.md`
+1. Add the skill to the routing table in `.github/skills/using-d365-fo-skills/SKILL.md`
 2. Add the skill to `.github/copilot-instructions.md` skill routing table
 3. Add a trigger prompt to `tests/skill-triggering/prompts/`
 4. Add an explicit invocation prompt to `tests/explicit-skill-requests/prompts/`
