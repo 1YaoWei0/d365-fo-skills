@@ -1,0 +1,1 @@
+I need to add a new field to the SalesTable to store a custom approval status. I need to extend the standard Sales Order form to display this field, and I also need a CoC method on SalesLine to populate it based on the order status.

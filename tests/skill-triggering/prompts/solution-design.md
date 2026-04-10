@@ -1,0 +1,1 @@
+My requirement is clear: I need to add a custom approval workflow step to the Vendor Invoice Journal. I need help deciding the best implementation approach — should I use chain of command, an event handler, or a new workflow type?

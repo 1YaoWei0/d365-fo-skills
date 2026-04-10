@@ -1,0 +1,1 @@
+I have a new requirement from the business: they want to track an additional reference number on purchase orders that links to an external procurement system. I'm not sure exactly how it should work yet or what objects are involved.
